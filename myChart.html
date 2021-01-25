@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang=''>
+	<head>
+		<script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+		<script src="//cdnjs.cloudflare.com/ajax/libs/raphael/2.1.0/raphael-min.js"></script>
+		<script src="//cdnjs.cloudflare.com/ajax/libs/morris.js/0.5.1/morris.min.js"></script>
+		<script src="assets/js/userManagement.js"></script>
+		<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/morris.js/0.5.1/morris.css">
+		<script>
+			$(document).ready(function(){
+				showDashboard();
+			});
+			
+			function showDashboard(siD){
+				if(siD==null){
+					var sessionID = getCookie("wordTestLogin");
+				}else{
+					var sessionID = siD;
+				}
+				var myURL = "MY_API/transaction?trans=8001&sessionID="+sessionID;
+				myURL=myURL.replace(/{/g,"(@(").replace(/}/g,")@)");
+				$.get(myURL, function(data, status){
+					if(status=='success'){
+						if(data.CoverAll!=null){
+							for(var i =0;i<data.CoverAll.length;i++){
+								if(data.CoverAll[i].TestNo==0){
+									data.CoverAll[i].label="Never Tested";
+								}else{
+									data.CoverAll[i].label="Tested "+data.CoverAll[i].TestNo+" times";
+								}
+							}
+							var chart01= Morris.Donut({
+								element: 'chart_overallCover',
+								data: [{label:"",value:0}],
+							});		
+							chart01.setData(data.CoverAll);
+						}
+						if(data.CoverRight!=null){
+							for(var i =0;i<data.CoverRight.length;i++){
+								if(data.CoverRight[i].ContinueRight==0){
+									data.CoverRight[i].label="Never Right";
+								}else{
+									data.CoverRight[i].label="Right "+data.CoverRight[i].ContinueRight+" times";
+								}
+							}
+							var chart02= Morris.Donut({
+								element: 'chart_correctCover',
+								data: [{label:"",value:0}],
+							});
+							chart02.setData(data.CoverRight);
+						}
+						if(data.recentTested==null){
+							data.recentTested=[];
+						}
+						if(data.recentWrong==null){
+							data.recentWrong=[];
+						}
+						if(data.recentAdd==null){
+							data.recentAdd=[];
+						}
+						var barData = [
+							{y:"",add:0,test:0,wrong:0},
+							{y:"",add:0,test:0,wrong:0},
+							{y:"",add:0,test:0,wrong:0},
+							{y:"",add:0,test:0,wrong:0},
+							{y:"",add:0,test:0,wrong:0},
+							{y:"",add:0,test:0,wrong:0},
+							{y:"",add:0,test:0,wrong:0}
+						];
+						var d = new Date();
+						for(var i =0;i<barData.length;i++){
+							barData[i].y=formatDate(d);
+							for(var j=0;j<data.recentAdd.length;j++){
+								if(barData[i].y==data.recentAdd[j].Add_Date){
+									barData[i].add=data.recentAdd[j].value;
+									break;
+								}
+							}
+							for(var j=0;j<data.recentTested.length;j++){
+								if(barData[i].y==data.recentTested[j].Test_Date){
+									barData[i].test=data.recentTested[j].value;
+									break;
+								}
+							}
+							for(var j=0;j<data.recentWrong.length;j++){
+								if(barData[i].y==data.recentWrong[j].Mistake_Date){
+									barData[i].wrong=data.recentWrong[j].value;
+									break;
+								}
+							}
+							d.setDate(d.getDate() - 1);
+						}
+					}
+//					chart03.setData(barData);
+					Morris.Bar({
+					  element: 'chart_lastweek',
+					  data: barData,
+					  xkey: 'y',
+					  ykeys: ['add', 'test','wrong'],
+					  labels: ['Added', 'Tested', 'Made Mistake']
+					});
+				});
+			
+			}
+			function initDashboard(){
+				chart01= Morris.Donut({
+			  		element: 'chart_overallCover',
+				  	data: [{label:"",value:0}],
+				});		
+				chart02= Morris.Donut({
+			  		element: 'chart_correctCover',
+			  		data: [{label:"",value:0}],
+				});
+				chart03= Morris.Bar({
+					element: 'chart_lastweek',
+				  	data: [{y:"",add:0,test:0,wrong:0},],
+				  	xkey: 'y',
+				  	ykeys: ['add', 'test','wrong'],
+				  	labels: ['Added', 'Tested', 'Made Mistake']
+				});
+			}
+			function formatDate(date) {
+				var d = new Date(date),
+					month = '' + (d.getMonth() + 1),
+					day = '' + d.getDate(),
+					year = d.getFullYear();
+
+				if (month.length < 2) month = '0' + month;
+				if (day.length < 2) day = '0' + day;
+
+				return [year, month, day].join('-');
+			}
+		</script>
+	</head>
+	<body>
+		<div style="width:100%;text-align:center">
+			<br><br><h3>Test Coverage</h3>
+			<div id="chart_overallCover" style="height: 250px;"></div>
+			<br><br><h3>Correct Coverage</h3>
+			<div id="chart_correctCover" style="height: 250px;"></div>
+			<br><br><h3>Last Week Result</h3>
+			<div id="chart_lastweek" style="height: 250px;"></div>
+		</div>
+	</body>
+</html>
+

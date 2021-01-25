@@ -1,0 +1,1038 @@
+<!doctype html>
+<html lang=''>
+	<head>
+		<link rel="icon" type="image/png" href="images/logo.jpg" />
+		<link rel="apple-touch-icon" href="images/logo.jpg">
+		<link rel="icon" sizes="192x192" href="images/logo.jpg">
+		<meta name="mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-title" content="WORDTEST">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<link rel="apple-touch-startup-image" href="images/chargement.gif">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+		<script src="https://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
+		<!script src="assets/js/responsivevoice.js"><!/script>
+		<script src="assets/js/userManagement.js?v1"></script>
+		<link rel="stylesheet" href="assets/css/mainMenu.css">
+		<meta charset="utf-8" />
+		<link rel="stylesheet" href="https://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css">
+		<title>WORDTEST</title>
+		<script>
+			var todaysWordList =[];
+			var iword;
+			var startTime;
+			$(function() {  
+				$("#mobileMenuClick").on('click touchstart',function(e) {  
+					showHideMobile();  e.preventDefault();  
+				});    
+			});
+			$(document).ready(function(){
+				if ('speechSynthesis' in window) {
+				 // Synthesis support. Make your web apps talk!
+					var speech_voices;
+					var voiceStr="";
+					$('#page05_tts').html(voiceStr);
+					getConfig();
+					if ('speechSynthesis' in window) {
+					  	speech_voices = window.speechSynthesis.getVoices();
+					  	window.speechSynthesis.onvoiceschanged = function() {
+							window.speechSynthesis.getVoices().forEach(function(voice) {
+//								if(voice.name.indexOf("English")>0){
+//								  	console.log(voice.name, voice.default ? voice.default :'');
+//									voiceStr = $('#page05_tts').html()+"<option value='"+voice.name+"'>"+voice.name+"</option>";
+//									$('#page05_tts').html(voiceStr);
+//									$('#page05_tts').selectmenu().selectmenu('refresh');
+//								}
+							});
+							console.log("voice loaded");
+					  	};
+						
+						
+					}				
+				} //Loading speech voice choices. */
+				getConfig();
+			});
+function showHideMobile() {  
+	if($(window).width()<=768){
+		var widthmenu = $("#cssmenu").width();
+		if($("#cssmenu").position().left<0){
+			$("#cssmenu").animate({left:0});
+			$("#headerLine").animate({left:widthmenu});
+			$("#mainArea").animate({left:widthmenu});
+			$("#contentArea").animate({left:widthmenu});
+			$("#mainArea").fadeTo(40,0.4);
+		}
+		else{
+
+			$("#cssmenu").animate({left:-widthmenu});
+			$("#mainArea").animate({left:0});
+			$("#contentArea").animate({left:0});
+			$("#headerLine").animate({left:0});
+			$("#headerBar").fadeTo(40,1);
+			$("#foother").fadeTo(40,1);
+			$("#mainArea").fadeTo(40,1);			
+		}
+	}
+}
+			function speakPhrase(phrase) {
+//				alert($('#page05_tts').val());
+				if(phrase =="")
+				{
+//					alert("Please enter a phrase before asking me to speak for you. Thank you!");
+				}
+				else
+				{
+					var speech = new SpeechSynthesisUtterance(phrase);
+					speech.rate=$('#page05_rate').val()/10;
+					speech.pitch=$('#page05_pitch').val()/10;
+					var voices = window.speechSynthesis.getVoices();
+					speech.default = false;
+//					speech.voice = voices.filter(function(voice) { return voice.name == $('#page05_tts').val(); })[0];
+					speech.lang = 'en-GB'; //Also added as for some reason android devices used for testing loaded spanish language 
+					window.speechSynthesis.speak(speech);
+				}
+			}
+			
+			function showMobilePage(page){
+				$.mobile.changePage("#"+page,{ transition: "flip"});
+			}
+			function readWord(text,infotag){
+				if(text!=""){
+					if($("#page05_Speak").val()=="MP3"){
+						var myDict = $("#page05_Dict").val();
+						var myURL = "http://api.pearson.com/v2/dictionaries/"+myDict+"/entries?headword="+text;
+						var listStr="";
+						var foundMp3 = false;
+						$.get(myURL, function(data, status){
+							if(data.status==200){
+								for(var i=0;i<data.results.length;i++){
+									if(data.results[i].headword.toUpperCase().trim()==text.toUpperCase().trim() && data.results[i].pronunciations!=null ){
+										for(var j =0;j<data.results[i].pronunciations.length;j++){
+											if(data.results[i].pronunciations[j].audio!=null){
+												for(var k=0;k<data.results[i].pronunciations[j].audio.length;k++){
+													if(data.results[i].pronunciations[j].audio[k].lang.indexOf("American")>=0){
+														var myMp3 = data.results[i].pronunciations[0].audio[0].url;
+														foundMp3 = true;
+														var audio = new Audio("http://api.pearson.com"+myMp3);
+														audio.play();
+														if(infotag!=null){
+															$("#"+infotag).html("Pronunced by MP3.")
+														}
+														break;
+													}
+												}
+											}
+
+										}
+									}
+
+								}
+								if(!foundMp3){
+									speakPhrase(text+"   .");
+									if(infotag!=null){
+										$("#"+infotag).html("Pronunced by TTS.")
+									}
+								}
+							}else{
+								speakPhrase(text+"   .");
+								if(infotag!=null){
+									$("#"+infotag).html("Pronunced by TTS.")
+								}
+							}
+						});
+					}else{
+						speakPhrase(text+"   .");
+						if(infotag!=null){
+							$("#"+infotag).html("Pronunced by TTS.")
+						}
+					}
+				}
+			}
+			function read_Word(text){
+//				responsiveVoice.speak(text,'UK English Male');
+				if(text!=""){
+					speakPhrase(text+"   .");
+				}
+			}
+			function showWordInternet(text){
+				if(text!="" && text!=null){
+					getWordFromDictionary(text);
+				}
+			}
+			function page11_readWord(){
+				var text=$("#page11_Word").val()+'. meaning: '+$("#page11_Meaning").val()+".   "+$("#page11_Sample").val();
+				var text=$("#page11_Word").val();
+//				responsiveVoice.speak(text,'UK English Male');
+				speakPhrase(text);
+			}
+			function page11_showWord(text){
+				var data={
+					"Word":	text
+				};
+				if(text!="" || text!=null){
+					var sessionID = getCookie("wordTestLogin");
+					var myURL = "MY_API/transaction?sessionID="+sessionID+"&trans=1001&data="+JSON.stringify(data);
+					myURL=myURL.replace(/{/g,"(@(").replace(/}/g,")@)");
+
+					$.get(myURL, function(data, status){
+						$("#page11_Meaning").val("");
+						$("#page11_Sample").val("");
+						$("#page11_wordID").html("");
+						if(data.status=='ok'){
+							$("#page11_Meaning").val(data.result.Meaning);
+							$("#page11_Sample").val(data.result.Example);
+							$('#page11_CateSelect').selectmenu();
+							$("#page11_CateSelect").val(data.result.Category);
+							$("#page11_CateSelect option[value='"+data.result.Category+"']").attr('selected', 'selected');  
+							$('#page11_CateSelect').selectmenu('refresh');
+//							$('input:radio[name="page11_Category"]').filter('[value="'+data.Category+'"]').attr('checked', true);
+							$("#page11_wordID").html(data.result.ID);
+							page11_showFavorite(data.result.Word,data.result.ID);
+						}else{
+							$("#page11_Meaning").val("");
+							$("#page11_Sample").val("");
+							$("#page11_wordID").html("");
+						
+						}
+					});
+					
+				}
+			}
+			function page11_newWord(){
+				$("#page11_Word").val("");
+				$("#page11_Meaning").val("");
+				$("#page11_Sample").val("");
+				$("#listViewDictionary").html("");
+				$("#listViewDictionary").listview().listview("refresh");
+				page11_showFavorite("","");
+				$("#page11_info").html("");
+			}
+			function page11_submitWord(){
+				var data={
+					"Word":		$("#page11_Word").val(),
+					"Meaning":	$("#page11_Meaning").val().replace(/'/g,"\\'"),
+					"Example":	$("#page11_Sample").val().replace(/'/g,"\\'"),
+					"Category":	$('#page11_CateSelect').val()
+				};
+				var sessionID = getCookie("wordTestLogin");
+				var myURL = "MY_API/transaction?sessionID="+sessionID+"&trans=1002&data="+JSON.stringify(data);
+				myURL=myURL.replace(/{/g,"(@(").replace(/}/g,")@)");
+				$.get(myURL, function(data, status){
+					if(status!='success'){
+						$("#page11_info").html("<img style='width:14px' src='images/warning.ico'> Update Fail!");
+					}else{
+						if(data.status=='ok'){
+							$("#page11_info").html("<img style='width:14px' src='images/Ok.ico'> Updated!");
+							page11_addFavorite(data.Word,data.WordID);
+							page11_newWord();
+						}else{
+							$("#page11_info").html("<img style='width:14px' src='images/warning.ico'>"+data.message);
+						}
+					}
+				});
+			}
+			function page11_showFavorite(word,wordID,pageID){
+				// Default Page ID is page11
+				var data={
+					"Word":		word,
+					"WordID":	wordID
+				};
+				var sessionID = getCookie("wordTestLogin");
+				var myURL = "MY_API/transaction?sessionID="+sessionID+"&trans=2001&data="+JSON.stringify(data);
+				myURL=myURL.replace(/{/g,"(@(").replace(/}/g,")@)");
+				if(word==""){
+					page11_showFavButton("fav");
+				}else{
+					$.get(myURL, function(data, status){
+						if(data.status=='ok'){
+							if(pageID=="page12"){
+								page12_showFavButton("rem");
+							}else{
+								page11_showFavButton("rem");
+							}
+						}else{
+							if(pageID=="page12"){
+								page12_showFavButton("fav");
+							}else{
+								page11_showFavButton("fav");
+							}
+						}
+					});
+				}
+				
+			}
+			function page11_showFavButton(input){
+				if(input=="fav"){
+					$("#page11_rem").hide();
+					$("#page11_fav").show();
+				}else{
+					$("#page11_fav").hide();
+					$("#page11_rem").show();
+				}
+			}
+			function page12_showFavButton(input){
+				if(input=="fav"){
+					$("#page12_rem").hide();
+					$("#page12_fav").show();
+				}else{
+					$("#page12_fav").hide();
+					$("#page12_rem").show();
+				}
+			}
+			function page11_addFavorite(word,wordID,pageID){
+				var data={
+					"Word":		word,
+					"WordID":	wordID
+				};
+				var sessionID = getCookie("wordTestLogin");
+				var myURL = "MY_API/transaction?sessionID="+sessionID+"&trans=2002&data="+JSON.stringify(data);
+				myURL=myURL.replace(/{/g,"(@(").replace(/}/g,")@)");
+				$.get(myURL, function(data, status){
+					if(data.status=='ok'){
+						if(pageID=="page12"){
+							page12_showFavButton("rem");
+						}else{
+							if($("#page11_Word").val()==""){
+								page11_showFavButton("fav");
+							}else{
+								page11_showFavButton("rem");
+							}
+						}
+					}else{
+						if(pageID=="page12"){
+							page12_showFavButton("fav");
+						}else{
+							page11_showFavButton("fav");
+						}
+					}
+				});
+			
+			}
+			function page11_removeFavorite(word,wordID,pageID){
+				// Default pageID="page11"
+				var data={
+					"Word":		word,
+					"WordID":	wordID
+				};
+				var sessionID = getCookie("wordTestLogin");
+				var myURL = "MY_API/transaction?sessionID="+sessionID+"&trans=2003&data="+JSON.stringify(data);
+				myURL=myURL.replace(/{/g,"(@(").replace(/}/g,")@)");
+				$.get(myURL, function(data, status){
+//					alert(JSON.stringify(data));
+//					alert(myURL);
+//					alert(pageID);
+					if(data.status=='ok'){
+						if(pageID=="page12"){
+								page12_showFavButton("fav");
+						}else{
+							if($("#page11_Word").val()==""){
+								page11_showFavButton("rem");
+							}else{
+								page11_showFavButton("fav");
+							}
+						}
+					}else{
+						if(pageID=="page12"){
+							page12_showFavButton("fav");
+						}else{
+							page11_showFavButton("fav");
+						}
+					}
+				});
+			
+			}
+			function showDictionaryMeaning(data){
+				$("#page11_Word").off("change");
+				data = data.replace(/%22/g,'"').replace(/%27/g,"'");
+				var result=JSON.parse(data);
+				if(result.part_of_speech==null){
+					var meaning=""
+				}else{
+					var meaning=result.part_of_speech+": \n";
+				}
+				var example="";
+				for(var i =0;i<result.senses.length;i++){
+					if(result.senses[i].definition!=null){
+						meaning += result.senses[i].definition+'\n';
+					}
+					if(result.senses[i].gramatical_examples!=null){
+						for(var j=0;j<result.senses[i].gramatical_examples.length;j++){
+							if(result.senses[i].gramatical_examples[j].text!=null){
+								example += result.senses[i].gramatical_examples[j].text+'\n';
+							}
+						}
+					}
+					if(result.senses[i].examples!=null){
+						for(var j=0;j<result.senses[i].examples.length;j++){
+							if(result.senses[i].examples[j].text!=null){
+								example += result.senses[i].examples[j].text+'\n';
+							}
+						}
+					}
+				}
+//				$("#page11_Word").val(result.headword);
+				if(result.headword==$("#page11_Word").val()){
+					if($("#page11_Meaning").val()!=meaning){
+						$("#page11_Meaning").val($("#page11_Meaning").val()+"\n"+meaning);
+					}
+					if($("#page11_Sample").val()!=example){
+						$("#page11_Sample").val($("#page11_Sample").val()+"\n"+example);
+					}
+					}else{
+					$("#page11_Word").val(result.headword);
+					$("#page11_Meaning").val(meaning);
+					$("#page11_Sample").val(example);
+				
+				}
+				$("#page11_info").html("");
+				$("#page11_Word").on("change",function(){
+					page11_showWord($('#page11_Word').val());
+				});
+			}
+			function showOtherMeaning(i){
+				var data=todaysWordList[i];
+				$("#page11_Word").off("change");
+				$("#page11_wordID").html(data.ID);
+				$("#page11_Word").val(data.Word);
+				$("#page11_Meaning").val(data.Meaning);
+				$("#page11_Sample").val(data.Example);
+			
+				$('#page11_CateSelect').selectmenu();
+				$("#page11_CateSelect").val(data.Category);
+				$("#page11_CateSelect option[value='"+data.Category+"']").attr('selected', 'selected');  
+				$('#page11_CateSelect').selectmenu('refresh');
+				$("#page11_info").html("");
+				page11_showFavorite(data.Word,data.ID);
+				$("#page11_Word").on("change",function(){
+					page11_showWord($('#page11_Word').val());
+				});
+			}
+			function getWordFromDictionary(word){
+				var myDict = $("#page05_Dict").val();
+				var myURL = "http://api.pearson.com/v2/dictionaries/"+myDict+"/entries?headword="+word;
+				var listStr="";
+				$.get(myURL, function(data, status){
+					if(data.status==200){
+						for(var i=0;i<data.results.length;i++){
+							if(data.results[i].senses[0].definition!=null){
+								listStr += "<li><a onclick='$(this).hide();showDictionaryMeaning(\""+JSON.stringify(data.results[i]).replace(/"/g,'%22').replace(/'/g,'%27')+"\");'>"; 
+								listStr += '<h2>'+data.results[i].headword+'</h2><p>';
+								for(var j=0;j<data.results[i].senses.length;j++){
+									if(data.results[i].senses[j].definition!=null){
+										listStr += '<p>Meaning:'+data.results[i].senses[j].definition+'</p>';
+									}
+								}
+			//					listStr += '<span class="ui-li-count">'+data.results[i].donateStatus+'</span>'
+								listStr += '</a></li>';
+							}
+							
+						}
+						$("#listViewDictionary").html(listStr);
+						$("#listViewDictionary").listview().listview("refresh");
+					}else{
+						$("#listViewDictionary").html(listStr);
+						$("#listViewDictionary").listview().listview("refresh");
+					}
+				});
+	
+			}
+			function getWordsUnfavorite(){
+				var data={
+					"TotalRow":		30,
+					"Category":		$('#page11_CateSelect').val()
+				};
+				var sessionID = getCookie("wordTestLogin");
+				var myURL = "MY_API/transaction?sessionID="+sessionID+"&trans=1005&data="+JSON.stringify(data);
+				myURL=myURL.replace(/{/g,"(@(").replace(/}/g,")@)");
+				var listStr="";
+				$("#page11_info").html("<img src='images/chargement.gif'>");
+				$.get(myURL, function(data, status){
+//					alert(JSON.stringify(data));
+					if(data.status=='ok'){
+						todaysWordList=data.results;
+						for(var i = 0;i<data.results.length;i++){
+							listStr += "<li><a onclick='showOtherMeaning("+i+");$(this).hide();'>"; 
+							listStr += '<h2>'+data.results[i].Word+'</h2><p>';
+							listStr += '<p>Meaning:'+data.results[i].Meaning+'</p>';
+							listStr += '</a></li>';
+						}
+						$("#listViewDictionary").html(listStr);
+						$("#listViewDictionary").listview().listview("refresh");
+						$("#page11_info").html("");
+					}else{
+						$("#listViewDictionary").html(listStr);
+						$("#listViewDictionary").listview().listview("refresh");
+						$("#page11_info").html("");
+					
+					}
+				});
+			
+			}
+			
+			function startWordTest(){
+				var data={
+					"numberOfWords":	parseInt($("#page05_totalInTest").val()),
+					"numberOfRecent":	parseInt($("#page05_recentInTest").val())
+				};
+				var sessionID = getCookie("wordTestLogin");
+				var myURL = "MY_API/transaction?sessionID="+sessionID+"&trans=3003&data="+JSON.stringify(data);
+				myURL=myURL.replace(/{/g,"(@(").replace(/}/g,")@)");
+
+				$.get(myURL, function(data, status){
+					if(data.status=='ok'){
+						todaysWordList=data.results;
+						$('#page31_QuesTotal').html(data.number);
+						page31_testQuestions(0);
+					}else{
+					}
+				});
+				
+			}
+			function page31_testQuestions(i){
+				startTime = Date.now();
+				if(i<todaysWordList.length){
+					var choiceDisplay=['','','',''];
+					var thisWord = todaysWordList[i];
+					var rnd = Math.floor(Math.random()*3.999);
+					choiceDisplay[rnd]=thisWord.Meaning;
+					readWord(thisWord.Word,'page31_info');
+					for(var j = 0;j<thisWord.Choices.length;j++){
+						if(j<rnd){
+							choiceDisplay[j]=thisWord.Choices[j].Meaning;
+						}else{
+							choiceDisplay[j+1]=thisWord.Choices[j].Meaning;
+						}
+					}
+					$("#page31_entryID").html(thisWord.ID)
+					$("#page31_info").html("");
+					$("#page31_Word").val("");
+					$("#page31_checked").html("0");
+					$("#page31_Word" ).prop( "disabled", false );
+					$('#page31_QuesNo').html(i+1);
+					$('#page31_totalTimes').html(thisWord.TestNo);			
+					$('#page31_spellTimes').html(thisWord.SpellRight);			
+					$('#page31_rightTimes').html(thisWord.RightNo);			
+					$('#page31_rightAnswer').html(thisWord.Word);			
+					$('#page31_rightSelection').html(rnd);			
+					$('#page31_c1').html("1.  "+choiceDisplay[0]);			
+					$('#page31_c2').html("2.  "+choiceDisplay[1]);			
+					$('#page31_c3').html("3.  "+choiceDisplay[2]);			
+					$('#page31_c4').html("4.  "+choiceDisplay[3]);		
+					showMobilePage("page31_wordQuestion");
+				}else{
+					$("#page31_info").html("<img style='width:14px' src='images/warning.ico'>No more questions!");
+				
+				}
+			}
+			function page31_checkSpelling(){
+				return ($("#page31_rightAnswer").html().toUpperCase().trim()==$("#page31_Word").val().toUpperCase().trim());
+			}
+			function page31_checkAnswer(){
+				var myAnswer=$("input[name=page31_Choices]:checked").val()
+				return (myAnswer==$("#page31_rightSelection").html());
+				
+			}
+			function page31_checkAll(){
+				if($("#page31_checked").html()=="0"){
+					var infoStr="";
+					if(page31_checkSpelling()){
+						infoStr += "<img style='width:14px' src='images/Ok.ico'>  Correct - "+$("#page31_rightAnswer").html()+"<br>";
+						$("#page31_mySpell").html(parseInt($("#page31_mySpell").html())+1);
+						var spellRight=1;
+					}else{
+						infoStr += "<img style='width:14px' src='images/warning.ico'>  Wrong - "+$("#page31_rightAnswer").html()+"<br>";
+						var spellRight=0;
+					}
+					if(page31_checkAnswer()){
+						infoStr += "<img style='width:14px' src='images/Ok.ico'>  Correct:"+(parseInt($("#page31_rightSelection").html())+1)+"<br>";
+						$("#page31_myChoice").html(parseInt($("#page31_myChoice").html())+1);
+						var rightNo=1;
+					}else{
+						infoStr += "<img style='width:14px' src='images/warning.ico'>  Wrong! Right Answer is:"+(parseInt($("#page31_rightSelection").html())+1)+"<br>";
+						var rightNo=0;
+					}
+					$("#page31_info").html(infoStr);
+					$("#page31_checked").html("1");
+					var timeElapsed = (Date.now()-startTime)/1000;
+					var data={
+						"ID":			$("#page31_entryID").html(),
+						"SpellRight":	spellRight,
+						"RightNo":		rightNo,
+						"TestNo":		1,
+						"Time":			timeElapsed	
+					};
+					var sessionID = getCookie("wordTestLogin");
+					var myURL = "MY_API/transaction?sessionID="+sessionID+"&trans=5001&data="+JSON.stringify(data);
+					myURL=myURL.replace(/{/g,"(@(").replace(/}/g,")@)");
+
+					$.get(myURL, function(data, status){
+						if(data.status=='ok'){
+						}else{
+						}
+					});
+				}
+			}
+			
+			function page21_listWords(){
+				var totalRow=30;
+				var timeFrame=$("input[name=page21_timeFrame]:checked").val();;
+				var percentMistake=$('#page21_percentMistake').val();
+				var continueWrong=$('#page21_continueWrong').val();
+				var continueRight=$('#page21_continueRight').val();
+				var averageTime=$('#page21_averageTime').val();
+				var data={
+					"TotalRow":			totalRow,
+					"TimeFrame":		parseInt(timeFrame),
+					"PercentMistake":	percentMistake,
+					"ContinueWrong":	continueWrong,
+					"ContinueRight":	continueRight,
+					"AverageTime":		averageTime
+				};
+				var sessionID = getCookie("wordTestLogin");
+				var myURL = "MY_API/transaction?sessionID="+sessionID+"&trans=3001&data="+JSON.stringify(data);
+				myURL=myURL.replace(/{/g,"(@(").replace(/}/g,")@)");
+				var listStr="";
+
+				$.get(myURL, function(data, status){
+					showMobilePage('page21_listWords');
+//					$('#page21_info').html
+//					alert(JSON.stringify(data));
+//					alert(status);
+					if(data.status=='ok'){
+						todaysWordList=data.results;
+						for(var i =0;i<todaysWordList.length;i++){
+							listStr += "<li><a onclick='showFlashCard("+i+");'>"; 
+							listStr += '<h2>'+todaysWordList[i].Word+'</h2><p>';
+							listStr += '<p>Tested: '+todaysWordList[i].TestNo+'  times. Spell right: '+todaysWordList[i].SpellRight+', Answer right: '+todaysWordList[i].RightNo+'</p>';
+							listStr += '</a></li>';
+							$('#page21_info').html("<img style='width:14px' src='images/Ok.ico'>");
+							$("#page21_listWord").html(listStr);
+							$("#page21_listWord").listview().listview("refresh");
+						}
+					}else{
+						$('#page21_info').html("<img style='width:14px' src='images/warning.ico'>  No such words.");
+						$("#page21_listWord").html(listStr);
+						$("#page21_listWord").listview().listview("refresh");
+					}
+				});
+				
+			}
+			function showFlashCard(i){
+				iword=i;
+				page11_showFavorite(todaysWordList[i].Word,todaysWordList[i].WordID,"page12")
+				$('#page12_word').html(todaysWordList[i].Word);
+				$('#page15_word').html(todaysWordList[i].Word);
+				$('#page12_meaning').html(todaysWordList[i].Meaning.replace(/\n/g,"<br>"));
+				$('#page12_sample').html(todaysWordList[i].Example);
+				$('#page15_totalTimes').html(todaysWordList[i].TestNo);			
+				$('#page15_spellTimes').html(todaysWordList[i].SpellRight);			
+				$('#page15_rightTimes').html(todaysWordList[i].RightNo);			
+				showMobilePage("page15_wordOnly");
+				$('#page12_info').html("");
+				$('#page15_info').html("");
+			
+			}
+			function showHideParameter(){
+				if($('#page21_parameter').is(":visible")){
+					$('#page21_parameter').hide();
+				}else{
+					$('#page21_parameter').show();
+				}
+			}
+			
+			function showChgPwd(){
+				$('#page08_old').val("");
+				$('#page08_new1').val("");
+				$('#page08_new2').val("");
+				$("#page08_info").html("");
+				showMobilePage('page08_changePwd');
+			}
+
+			function getConfig(input){
+				var cookie=getCookie("wordTestLogin");
+				var responseJson = {};
+				$("#page05_settings").page();
+				$.ajax({
+					url: 'MY_API/verifySession?sessionID='+getCookie("wordTestLogin"),
+					data: {
+						format: 'json'
+					},
+					error: function() {
+						$.mobile.changePage("#page02_login",{ transition: "flip"});
+					},
+					async: true,
+			//	   dataType: 'jsonp',
+					success: function(data) {
+						if(data.status=="ok"){
+							if(data.type=="student"){
+								$("#page00_listKids").html("");
+								$("#page00_listKids").listview().listview("refresh");
+							}else if(data.type=="parent" || data.type=="administrator"){
+								var kidsStr="";
+//								var kidsStr="<li><a onclick='showKidsStatus(\"Myself\");'><h2>Myself</h2></a></li>";
+								if(data.group!=""){
+									var str_array = data.group.split(',');
+
+									for(var i = 0; i < str_array.length; i++) {
+									   // Trim the excess whitespace.
+									   	str_array[i] = str_array[i].replace(/^\s*/, "").replace(/\s*$/, "");
+									   // Add additional code here, such as:
+									   	kidsStr += "<li><a onclick='showKidsStatus(\""+str_array[i]+"\");'>";
+										kidsStr += '<h2>'+str_array[i]+'</h2>';
+										kidsStr += '</a></li>';
+									}								
+								}
+								$("#page00_listKids").html(kidsStr);
+								$("#page00_listKids").listview().listview("refresh");
+							}
+							if(data.settings==""){
+								$("#page05_pitch").val(10);
+								$("#page05_rate").val(10);
+			//					$("page05_Dict").val("ldoce5");
+								$("#page05_Dict option[value='ldoce5']").attr('selected', 'selected');  
+								$("#page05_Speak option[value='TTS']").attr('selected', 'selected');  
+								$('#page05_Dict').selectmenu().selectmenu('refresh');
+								$("#page05_totalInTest").val(50);
+								$("#page05_recentInTest").val(20);
+							}else{
+								var mySetting = JSON.parse(data.settings);
+								$("#page05_pitch").val(mySetting.pitch).slider('refresh');
+								$("#page05_rate").val(mySetting.rate).slider('refresh');
+								$("#page05_Dict option[value='"+mySetting.dict+"']").attr('selected', 'selected');  
+								$("#page05_Speak option[value='"+mySetting.pronounce+"']").attr('selected', 'selected');  
+								$('#page05_Dict').selectmenu().selectmenu('refresh');
+								$('#page05_Speak').selectmenu().selectmenu('refresh');
+								$("#page05_totalInTest").val(parseInt(mySetting.totalInTest)).slider('refresh');
+								$("#page05_recentInTest").val(parseInt(mySetting.recentInTest)).slider('refresh');
+							}
+							if(!input){
+								showMobilePage("page00_home");
+							}
+						}else{
+					 // Invalide sessionID
+							showMobilePage("page02_login");
+						}
+					},
+				   type: 'GET'
+			   });				
+			}			
+			function saveConfig(){
+				var data={
+					"pronounce":	$("#page05_Speak").val(),
+					"pitch":		$("#page05_pitch").val(),
+					"rate":			$("#page05_rate").val(),
+					"dict":			$("#page05_Dict").val(),
+					"totalInTest":	$("#page05_totalInTest").val(),
+					"recentInTest":	$("#page05_recentInTest").val()
+				};
+				var sessionID = getCookie("wordTestLogin");
+				var myURL = "MY_API/transaction?sessionID="+sessionID+"&trans=9006&data="+JSON.stringify(data);
+				myURL=myURL.replace(/{/g,"(@(").replace(/}/g,")@)");
+				$.get(myURL, function(data, status){
+					if(status!='success'){
+						$("#page05_info").html("<img style='width:14px' src='images/warning.ico'> Update Fail!");
+					}else{
+						if(data.status=='ok'){
+							showMobilePage("page00_home");
+						}else{
+							$("#page05_info").html("<img style='width:14px' src='images/warning.ico'>"+data.message);
+						}
+					}
+				});
+			
+			}
+			
+			function showKidsStatus(user){
+				$("#page00_image").hide();
+				if(user=="Myself"){
+					$("#page00_myChart01").attr('src',"myChart_CoverAll.php?time="+new Date().getTime());
+					$("#page00_myChart02").attr('src',"myChart_CoverRight.php?time="+new Date().getTime());
+//					$("#page00_myChart03").attr('src',"myChart_LastWeek.php?time="+new Date().getTime());
+					$("#page00_myChart03").attr('src',"myChart_LastWeekSimple.php?time="+new Date().getTime());
+				}else{
+					$("#page00_myChart01").attr('src',"myChart_CoverAll.php?user="+user+"&time="+new Date().getTime());
+					$("#page00_myChart02").attr('src',"myChart_CoverRight.php?user="+user+"&time="+new Date().getTime());
+//					$("#page00_myChart03").attr('src',"myChart_LastWeek.php?user="+user+"&time="+new Date().getTime());
+					$("#page00_myChart03").attr('src',"myChart_LastWeekSimple.php?user="+user+"&time="+new Date().getTime());
+				}
+			}
+		</script>
+		<style>
+		</style>
+	</head>
+	<body>
+		<div id="mainArea">
+			<a id="mobileMenuClick" href="#mobileMenuExpand" class="mobileMenuClick"><img id="mobileMenuImage"></a>	
+			<div id="headerBar">
+				<h3 style="color:white;"><img src="images/logo.jpg"/><a id="mainPageTitle">Vocabulary Builder</a></h3>
+			</div>
+			<div data-role="header">
+				<div id="headerLine"></div>
+			</div>
+			<div id="contentArea">
+				<div data-role="page" id="page00_home">
+					<div data-role="header">
+						<div data-role="navbar" id="page00_fav" style=";">
+							<ul>
+								<li><a href="#" onclick="showChgPwd();" data-icon="user">Change Password</a></li>
+								<li><a href="#" onclick="showKidsStatus('Myself');" data-icon="refresh">Dashboard</a></li>
+								<li><a href="#" onclick="showMobilePage('page05_settings');getConfig(true);" data-icon="gear">Settings</a></li>
+							</ul>
+						</div>
+					</div>
+					<div style="width:100%;text-align:center">
+						<h2>Welcome to Vocabulary Builder</h2>
+						<ul data-role="listview" data-inset="true" id="page00_listKids" data-filter="false" ></ul>
+						<img id="page00_image" src="images/vocabularyBuilder.png"><br>
+						<iframe id="page00_myChart01" style="padding:0;height:300px;width:260px;" src="" marginwidth="0" marginheight="0" frameborder="0" scrolling="no"></iframe>						
+						<iframe id="page00_myChart02" style="padding:0;height:300px;width:260px;" src="" marginwidth="0" marginheight="0" frameborder="0" scrolling="no"></iframe>						
+						<iframe id="page00_myChart03" style="padding:0;height:300px;width:100%;" src="" marginwidth="0" marginheight="0" frameborder="0" scrolling="no"></iframe>						
+
+					</div>
+				</div>
+				<div data-role="page" id="page02_login">
+					<!img id="background_login" src="images/givingTreeLoginBack.jpg">
+					<div id="wrapper" style="opacity:0.9;"><section id="page02_main">
+						<span><!img src="./images/logo.jpg" alt="" width="50px"/></span>
+						<form>
+							<div>
+								<h3>Login information</h3>
+								<label for="usrnm" class="ui-hidden-accessible">Username:</label>
+								<input type="text" name="user" id="usrnm" placeholder="Username">
+								<label for="pswd" class="ui-hidden-accessible">Password:</label>
+								<input type="password" name="passw" id="pswd" placeholder="Password">
+								<input type="button" onclick="loginAll();" data-inline="true" value="Log in">
+								<!input type="button" onclick='$.mobile.changePage("#page03_register",{ transition: "flip"});;' data-inline="true" value="Register">
+							</div>
+						</form>
+						<br><a href="#page03_register" data-transition="flip"></a>
+					</section></div>
+				</div>
+				<div data-role="page" id="page05_settings">
+					<div data-role="header">
+						<div data-role="navbar" style=";">
+							<ul>
+								<li><a href="#" onclick="speakPhrase('this is just a test.');" data-icon="audio">Listen</a></li>
+								<li><a href="#" onclick="saveConfig();" data-icon="check">Submit</a></li>
+							</ul>
+						</div>
+					</div>
+					<form method="post" action="">
+						<fieldset class="ui-field-contain">
+							<label for="page05_Speak">Pronunciateion Preference:</label>
+							<select name="page05_Speak" id="page05_Speak">
+								<option value='TTS'>Use TTS to Pronounce first</option>
+								<option value='MP3'>Use MP3 to Pronounce first</option>
+							</select>
+						</fieldset>
+						Pitch<br>
+						<input type="range" name="Quantity" id="page05_pitch" value="10" min="7" max="13">
+						Speed<br>
+						<input type="range" name="Quantity" id="page05_rate" value="10" min="7" max="13">
+						<fieldset class="ui-field-contain">
+							<label for="page05_Dict">Select Dictionary</label>
+							<select name="page05_Dict" id="page05_Dict">
+								<option value='ldoce5'>English - English</option>
+								<option value='ldec'>English - Chinese</option>
+							</select>
+						</fieldset>
+						<br>Total Number of words included in a test<br>
+						<input type="range" name="Quantity" id="page05_totalInTest" value="50" min="0" max="100">
+						Number of recent Added/Tested Words to include in a test<br>
+						<input type="range" name="Quantity" id="page05_recentInTest" value="25" min="0" max="100">
+					</form>		
+					<div id="page05_info"></div>
+				</div>
+				<div data-role="page" id="page08_changePwd">
+					<div data-role="main" class="ui-content">
+						<h2></h2>
+						<p>You are about to change the password</p>
+						<div class="ui-field-contain">
+							<label for="page08_old">Existing:</label>
+							<input type="password" name="old" id="page08_old" placeholder="Password">  
+							<label for="page08_new1">New:</label>
+							<input type="password" name="new1" id="page08_new1" placeholder="Password">      
+							<label for="page08_new2">Repeat:</label>
+							<input type="password" name="new2" id="page08_new2" placeholder="Password">
+							<a id="page06_displayAddress"></a>
+						</div>
+						<input type="submit" data-inline="true" value="Submit" onclick="changePassword();">
+					</div>
+					<div id="page08_info"></div>
+				</div>
+				<div data-role="page" id="page11_AddWord">
+					<div data-role="header">
+						<div data-role="navbar" id="page11_fav" style=";">
+							<ul>
+								<li><a href="#" onclick="getWordsUnfavorite();" data-icon="bullets">Other Words</a></li>
+								<li><a href="#" onclick="showWordInternet($('#page11_Word').val());" data-icon="search">Dictionary</a></li>
+								<li><a href="#" onclick="page11_readWord();" data-icon="audio">Read</a></li>
+								<li><a href="#" onclick="page11_submitWord();" data-icon="plus">Submit</a></li>
+								<li><a href="#" onclick="page11_addFavorite($('#page11_Word').val(),$('#page11_wordID').html());" data-icon="star">Favorite</a></li>
+								<!li><!a href="#" onclick="startWordTest();" data-icon="grid"><!/a><!/li>
+							</ul>
+						</div>
+						<div data-role="navbar" id="page11_rem" style="display:none;">
+							<ul>
+								<li><a href="#" onclick="getWordsUnfavorite();" data-icon="bullets">Other Words</a></li>
+								<li><a href="#" onclick="showWordInternet($('#page11_Word').val());" data-icon="search">Dictionary</a></li>
+								<li><a href="#" onclick="page11_readWord();" data-icon="audio">Read</a></li>
+								<li><a href="#" onclick="page11_submitWord();" data-icon="plus">Submit</a></li>
+								<li><a href="#" onclick="page11_removeFavorite($('#page11_Word').val(),$('#page11_wordID').html());" data-icon="check">Remove</a></li>
+								<!li><!a href="#" onclick="startWordTest();" data-icon="grid"><!/a><!/li>
+							</ul>
+						</div>
+					</div>
+					<a id="page11_info"></a>
+					<input type="text" name="Word" id="page11_Word" placeholder="Word" onchange="page11_showWord($('#page11_Word').val());">
+					<a id="page11_wordID" style="display:none;"></a>
+					<div id="page11_detail">
+						<textarea name="Meaning" id="page11_Meaning" placeholder="Meaning"></textarea>
+						<textarea name="Sample" id="page11_Sample" placeholder="Sample"></textarea>
+						<label for="page11_Cate">Select Dictionary</label>
+						<select name="page11_CateS" id="page11_CateSelect">
+							<option value='SAT'>SAT</option>
+							<option value='Reading'>Reading</option>
+							<option value='WW-4G'>Wordly Wise - 4</option>
+							<option value='WW-5G'>Wordly Wise - 5</option>
+							<option value='WW-6G'>Wordly Wise - 6</option>
+							<option value='WW-7G'>Wordly Wise - 7</option>
+						</select>
+						<a href="#" style="display:none;" onclick="$(this).hide(); showMobilePage('page12_reviewWord');" id="page11_backToFlashCard" class="ui-btn ui-icon-back ui-btn-icon-left">Back to Flash Card</a>
+						<ul data-role="listview" data-inset="true" id="listViewDictionary" data-filter="true" data-input="#needsFilter"></ul>
+						
+					</div>
+				</div>
+				<div data-role="page" id="page12_reviewWord">
+					<div data-role="header">
+						<div data-role="navbar" id="page12" style=";">
+							<ul>
+								<li><a href="#" onclick="iword--;if(iword<0){iword=0};showFlashCard(iword);" data-icon="carat-l"></a></li>
+								<li><a href="#" onclick="readWord($('#page12_word').html(),'page12_info');" data-icon="audio"></a></li>
+								<li><a href="#" onclick="showMobilePage('page15_wordOnly');" data-icon="recycle"></a></li>
+								<li><a href="#" onclick="iword++;if(iword>todaysWordList.length){iword=todaysWordList.length-1};showFlashCard(iword);;" data-icon="carat-r"></a></li>
+							</ul>
+						</div>
+					</div>
+					<div style="width=100%; padding:10px; text-align:center;">
+						<h2 id="page12_word">Word</h2>
+					</div>
+					<div style="width=100%; padding:10px; text-align:left;">
+						<h3>Meaning: </h3>
+						<p id="page12_meaning">Meaning.</p><br>
+						<h3>Example: </h3>
+						<p id="page12_sample">Sample sentense/</p>
+						<a href="#" onclick="page11_addFavorite(todaysWordList[iword].Word,todaysWordList[iword].WordID,'page12');" id="page12_fav" style="display:none;" class="ui-btn ui-icon-star ui-btn-icon-left">Add to my favorite</a>
+						<a href="#" onclick="page11_removeFavorite(todaysWordList[iword].Word,todaysWordList[iword].WordID,'page12');" id="page12_rem" class="ui-btn ui-icon-minus ui-btn-icon-left">Remove from my favorite</a>
+						<a href="#" onclick="page11_showWord(todaysWordList[iword].Word);$('#page11_Word').val(todaysWordList[iword].Word);$('#page11_backToFlashCard').show();showMobilePage('page11_AddWord');" id="page12_editWord" class="ui-btn ui-icon-edit ui-btn-icon-left">Edit Word</a>
+						<a id="page12_info"></a>
+					</div>
+				</div>
+				<div data-role="page" id="page15_wordOnly">
+					<div data-role="header">
+						<div data-role="navbar" id="page15" style=";">
+							<ul>
+								<li><a href="#" onclick="iword--;if(iword<0){iword=0};showFlashCard(iword);" data-icon="carat-l"></a></li>
+								<li><a href="#" onclick="readWord($('#page12_word').html(),'page15_info');" data-icon="audio"></a></li>
+								<li><a href="#" onclick="showMobilePage('page12_reviewWord');" data-icon="recycle"></a></li>
+								<li><a href="#" onclick="iword++;if(iword>todaysWordList.length){iword=todaysWordList.length-1};showFlashCard(iword);;" data-icon="carat-r"></a></li>
+							</ul>
+						</div>
+					</div>
+					<div style="width=100%; padding:10px; text-align:center;">
+						<h2 id="page15_word">Word</h2>
+					</div>
+					<div style="width=100%; padding:10px; text-align:left;">
+						<br><br><br>
+						<p>Tested <a id="page15_totalTimes"></a> times.</p>
+						<p>Spelled correctly <a id="page15_spellTimes"></a> times.</p>
+						<p>Answered correctly <a id="page15_rightTimes"></a> times.</p>
+						<a id="page15_info"></a>
+					</div>
+				</div>
+				<div data-role="page" id="page21_listWords">
+					<div data-role="header">
+						<div data-role="navbar" id="page11_fav" style=";">
+							<ul>
+								<li><a href="#" onclick="showMobilePage('page00_home');" data-icon="home">Home</a></li>
+								<li><a href="#" onclick="page21_listWords();" data-icon="refresh">Refresh</a></li>
+							</ul>
+						</div>
+					</div>
+					<div data-role="collapsible" >
+						<h3>Criteria of the Words to Review</h3>
+						<form id="page21_parameter">
+							<fieldset data-role="controlgroup">
+								<label for="page21_Choice1" id="page21_c1">Today</label>
+								<input type="radio" name="page21_timeFrame" id="page21_Choice1" value="1" checked>
+								<label for="page21_Choice2" id="page21_c2">This Week</label>
+								<input type="radio" name="page21_timeFrame" id="page21_Choice2" value="7"> 
+								<label for="page21_Choice3" id="page21_c2">All</label>
+								<input type="radio" name="page21_timeFrame" id="page21_Choice3" value="0"> 
+							</fieldset>
+							Only list the words with Percent of Mistakes higher than below:<br>
+							<input type="range" name="Quantity" id="page21_percentMistake" value="0" min="0" max="100">
+							The consecutive wrong time is more than:<br>
+							<input type="range" onchange="if($(this).val()>0){$('#page21_continueRight').val(0).slider('refresh');}" name="Quantity" id="page21_continueWrong" value="1" min="0" max="100">
+							The consecutive right time is more than:<br>
+							<input type="range" onchange="if($(this).val()>0){$('#page21_continueWrong').val(0).slider('refresh');}" name="Quantity" id="page21_continueRight" value="0" min="0" max="100">
+							The average time is over below number of seconds:<br>
+							<input type="range" name="Quantity" id="page21_averageTime" value="0" min="0" max="60">
+						</form>
+					</div>
+					<form class="ui-filterable">
+						<input id="page21_wordFilter" data-type="search">
+					</form>
+					<ul data-role="listview" data-inset="true" id="page21_listWord" data-filter="true" data-input="#page21_wordFilter"></ul>
+					<div id="page21_info"></div>
+				</div>
+				<div data-role="page" id="page31_wordQuestion">
+					<div data-role="header">
+						<div data-role="navbar" style=";">
+							<ul>
+								<li><a href="#" onclick="showMobilePage('page00_home');" data-icon="home">Home</a></li>
+								<li><a href="#" onclick="readWord($('#page31_rightAnswer').html(),'page31_info');" data-icon="audio">Repeat</a></li>
+								<li><a href="#" onclick="page31_checkAll();" data-icon="check">Submit</a></li>
+								<li><a href="#" onclick="if($('#page31_checked').html()=='1'){page31_testQuestions(parseInt($('#page31_QuesNo').html()));}else{$('#page31_info').html('<img style=\'width:14px\' src=\'images/warning.ico\'> You need to submit your answer first.');}" data-icon="carat-r">Next</a></li>
+							</ul>
+						</div>
+					</div>
+					<p>Question No <a id="page31_QuesNo"></a> of <a id="page31_QuesTotal"></a>:</p>
+					<p>Spelled Correctly: <a id="page31_mySpell">0</a>.    Chose Correctly: <a id="page31_myChoice">0</a></p>
+					<input type="text" name="Word" id="page31_Word" placeholder="Word" onchange=";">
+					<a id="page31_info"></a>
+					<a id="page31_Wordhide" ></a>
+					<a id="page31_rightAnswer" style="display:none;"></a>
+					<a id="page31_rightSelection" style="display:none;"></a>
+					<a id="page31_checked" style="display:none;">0</a>
+					<a id="page31_entryID" style="display:none;">0</a>
+					<div id="page31_ChoicesDisplay">
+						<fieldset data-role="controlgroup">
+							<label for="page31_Choice1" id="page31_c1"></label>
+							<input type="radio" name="page31_Choices" id="page31_Choice1" value="0" checked>
+							<label for="page31_Choice2" id="page31_c2"></label>
+							<input type="radio" name="page31_Choices" id="page31_Choice2" value="1"> 
+							<label for="page31_Choice3" id="page31_c3"></label>
+							<input type="radio" name="page31_Choices" id="page31_Choice3" value="2"> 
+							<label for="page31_Choice4" id="page31_c4"></label>
+							<input type="radio" name="page31_Choices" id="page31_Choice4" value="3"> 
+						</fieldset>
+					</div>
+					<p>Tested <a id="page31_totalTimes"></a> times.</p>
+					<p>Spelled correctly <a id="page31_spellTimes"></a> times.</p>
+					<p>Answer correctly <a id="page31_rightTimes"></a> times.</p>
+				</div>
+			</div>
+		</div>
+		<div id='cssmenu' class="cssmenu">
+			<ul>
+				<li><a href='' onclick="showHideMobile();verifyCookie();"><span>Home</span></a></li>
+				<li><a onclick="showHideMobile();showMobilePage('page11_AddWord');"><span>Add Words</span></a></li>
+				<li><a onclick="showHideMobile();startWordTest();"><span>Test</span></a></li>
+				<li><a href='#' onclick="showHideMobile();page21_listWords();"><span>Review</span></a></li>
+				<li class='last'><a onclick="wordTestLogout();" href='#'><span>Logout</span></a></li>
+			</ul>
+		</div>
+
+	</body>
+</html>

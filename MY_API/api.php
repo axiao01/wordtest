@@ -28,12 +28,6 @@ class API extends REST {
         $this->urlRoot = $dataConfig->ROOT;
         if($this->db)
             mysql_select_db($dataConfig->DB,$this->db);
-        
-        
-
-//      $this->db = mysql_connect(self::DB_SERVER,self::DB_USER,self::DB_PASSWORD);
-//      if($this->db)
-//          mysql_select_db(self::DB,$this->db);
     }
      
     /*
@@ -130,21 +124,21 @@ class API extends REST {
         $sql = "select * from `UserMaster` where token='" . $cookie ."'";
         $result = mysql_query($sql);
         if(mysql_num_rows($result)){
-        // Record found
+            // Record found
             $value1 = mysql_fetch_object($result);
-        //----------------------------------- Security validated ------------------------
+            //----------------------------------- Security validated ------------------------
             $userRole=$value1->type;
             $username=$value1->user;
             $this->givingTree_TR($userRole,$data,$transaction,$username);
         }else{
-        // No record found - user not registerd
+            // No record found - user not registerd
             $this->response("{'status':'error','message':'Invalid cookie'}", 200);
         };
     
     }
 
     function givingTree_TR($user,$data, $transaction,$username){
-    //---------------Check the Authorization from the database and execute the functions defined.
+        //---------------Check the Authorization from the database and execute the functions defined.
         $myDatabase= $this->db;// variable to access your database
         $sql = "SELECT * FROM  `transactionList` WHERE  `ID` = " . $transaction;
         $result=mysql_query($sql);
@@ -226,7 +220,7 @@ class API extends REST {
         }
         $myDatabase= $this->db;
         $id=$_GET['needsID'];
-          // do some validation here to ensure id is safe
+        // do some validation here to ensure id is safe
         $link = mysql_connect("localhost", "root", "");
         $sql = "SELECT `needsImage` FROM `givingTree_Needs_Master` WHERE ID='".$id."'";
         $result = mysql_query("$sql");

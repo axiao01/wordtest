@@ -74,10 +74,9 @@
                 }
             }
             function speakPhrase(phrase) {
-//				alert($('#page05_tts').val());
                 if(phrase =="")
                 {
-//					alert("Please enter a phrase before asking me to speak for you. Thank you!");
+                    //alert("Please enter a phrase before asking me to speak for you. Thank you!");
                 }
                 else
                 {
@@ -86,7 +85,7 @@
                     speech.pitch=$('#page05_pitch').val()/10;
                     var voices = window.speechSynthesis.getVoices();
                     speech.default = false;
-//					speech.voice = voices.filter(function(voice) { return voice.name == $('#page05_tts').val(); })[0];
+                    //speech.voice = voices.filter(function(voice) { return voice.name == $('#page05_tts').val(); })[0];
                     speech.lang = 'en-GB'; //Also added as for some reason android devices used for testing loaded spanish language 
                     window.speechSynthesis.speak(speech);
                 }
@@ -148,7 +147,7 @@
                 }
             }
             function read_Word(text){
-//				responsiveVoice.speak(text,'UK English Male');
+                //responsiveVoice.speak(text,'UK English Male');
                 if(text!=""){
                     speakPhrase(text+"   .");
                 }
@@ -161,7 +160,7 @@
             function page11_readWord(){
                 var text=$("#page11_Word").val()+'. meaning: '+$("#page11_Meaning").val()+".   "+$("#page11_Sample").val();
                 var text=$("#page11_Word").val();
-//				responsiveVoice.speak(text,'UK English Male');
+                //responsiveVoice.speak(text,'UK English Male');
                 speakPhrase(text);
             }
             function page11_showWord(text){
@@ -184,7 +183,7 @@
                             $("#page11_CateSelect").val(data.result.Category);
                             $("#page11_CateSelect option[value='"+data.result.Category+"']").attr('selected', 'selected');  
                             $('#page11_CateSelect').selectmenu('refresh');
-//							$('input:radio[name="page11_Category"]').filter('[value="'+data.Category+'"]').attr('checked', true);
+                            //$('input:radio[name="page11_Category"]').filter('[value="'+data.Category+'"]').attr('checked', true);
                             $("#page11_wordID").html(data.result.ID);
                             page11_showFavorite(data.result.Word,data.result.ID);
                         }else{
@@ -317,9 +316,6 @@
                 var myURL = "MY_API/transaction?sessionID="+sessionID+"&trans=2003&data="+JSON.stringify(data);
                 myURL=myURL.replace(/{/g,"(@(").replace(/}/g,")@)");
                 $.get(myURL, function(data, status){
-//                  alert(JSON.stringify(data));
-//                  alert(myURL);
-//                  alert(pageID);
                     if(data.status=='ok'){
                         if(pageID=="page12"){
                                 page12_showFavButton("fav");
@@ -369,7 +365,7 @@
                         }
                     }
                 }
-//              $("#page11_Word").val(result.headword);
+                //$("#page11_Word").val(result.headword);
                 if(result.headword==$("#page11_Word").val()){
                     if($("#page11_Meaning").val()!=meaning){
                         $("#page11_Meaning").val($("#page11_Meaning").val()+"\n"+meaning);
@@ -421,7 +417,7 @@
                                         listStr += '<p>Meaning:'+data.results[i].senses[j].definition+'</p>';
                                     }
                                 }
-            //                  listStr += '<span class="ui-li-count">'+data.results[i].donateStatus+'</span>'
+                                //listStr += '<span class="ui-li-count">'+data.results[i].donateStatus+'</span>'
                                 listStr += '</a></li>';
                             }
                             
@@ -446,7 +442,7 @@
                 var listStr="";
                 $("#page11_info").html("<img src='images/chargement.gif'>");
                 $.get(myURL, function(data, status){
-//                  alert(JSON.stringify(data));
+                    //alert(JSON.stringify(data));
                     if(data.status=='ok'){
                         todaysWordList=data.results;
                         for(var i = 0;i<data.results.length;i++){
@@ -594,9 +590,9 @@
 
                 $.get(myURL, function(data, status){
                     showMobilePage('page21_listWords');
-//                  $('#page21_info').html
-//                  alert(JSON.stringify(data));
-//                  alert(status);
+                    //$('#page21_info').html
+                    //alert(JSON.stringify(data));
+                    //alert(status);
                     if(data.status=='ok'){
                         todaysWordList=data.results;
                         for(var i =0;i<todaysWordList.length;i++){
@@ -660,7 +656,7 @@
                         $.mobile.changePage("#page02_login",{ transition: "flip"});
                     },
                     async: true,
-            //      dataType: 'jsonp',
+                    //dataType: 'jsonp',
                     success: function(data) {
                         if(data.status=="ok"){
                             if(data.type=="student"){
@@ -668,7 +664,7 @@
                                 $("#page00_listKids").listview().listview("refresh");
                             }else if(data.type=="parent" || data.type=="administrator"){
                                 var kidsStr="";
-//                              var kidsStr="<li><a onclick='showKidsStatus(\"Myself\");'><h2>Myself</h2></a></li>";
+                                //var kidsStr="<li><a onclick='showKidsStatus(\"Myself\");'><h2>Myself</h2></a></li>";
                                 if(data.group!=""){
                                     var str_array = data.group.split(',');
 
@@ -687,7 +683,7 @@
                             if(data.settings==""){
                                 $("#page05_pitch").val(10);
                                 $("#page05_rate").val(10);
-            //                  $("page05_Dict").val("ldoce5");
+                                //$("page05_Dict").val("ldoce5");
                                 $("#page05_Dict option[value='ldoce5']").attr('selected', 'selected');  
                                 $("#page05_Speak option[value='TTS']").attr('selected', 'selected');  
                                 $('#page05_Dict').selectmenu().selectmenu('refresh');
@@ -708,7 +704,7 @@
                                 showMobilePage("page00_home");
                             }
                         }else{
-                     // Invalide sessionID
+                            // Invalide sessionID
                             showMobilePage("page02_login");
                         }
                     },
@@ -746,12 +742,12 @@
                 if(user=="Myself"){
                     $("#page00_myChart01").attr('src',"myChart_CoverAll.php?time="+new Date().getTime());
                     $("#page00_myChart02").attr('src',"myChart_CoverRight.php?time="+new Date().getTime());
-//                  $("#page00_myChart03").attr('src',"myChart_LastWeek.php?time="+new Date().getTime());
+                    //$("#page00_myChart03").attr('src',"myChart_LastWeek.php?time="+new Date().getTime());
                     $("#page00_myChart03").attr('src',"myChart_LastWeekSimple.php?time="+new Date().getTime());
                 }else{
                     $("#page00_myChart01").attr('src',"myChart_CoverAll.php?user="+user+"&time="+new Date().getTime());
                     $("#page00_myChart02").attr('src',"myChart_CoverRight.php?user="+user+"&time="+new Date().getTime());
-//                  $("#page00_myChart03").attr('src',"myChart_LastWeek.php?user="+user+"&time="+new Date().getTime());
+                    //$("#page00_myChart03").attr('src',"myChart_LastWeek.php?user="+user+"&time="+new Date().getTime());
                     $("#page00_myChart03").attr('src',"myChart_LastWeekSimple.php?user="+user+"&time="+new Date().getTime());
                 }
             }
@@ -790,9 +786,8 @@
                     </div>
                 </div>
                 <div data-role="page" id="page02_login">
-                    <!img id="background_login" src="images/givingTreeLoginBack.jpg">
                     <div id="wrapper" style="opacity:0.9;"><section id="page02_main">
-                        <span><!img src="./images/logo.jpg" alt="" width="50px"/></span>
+                        <span></span>
                         <form>
                             <div>
                                 <h3>Login information</h3>
@@ -801,7 +796,7 @@
                                 <label for="pswd" class="ui-hidden-accessible">Password:</label>
                                 <input type="password" name="passw" id="pswd" placeholder="Password">
                                 <input type="button" onclick="loginAll();" data-inline="true" value="Log in">
-                                <!input type="button" onclick='$.mobile.changePage("#page03_register",{ transition: "flip"});;' data-inline="true" value="Register">
+                                <!--input type="button" onclick='$.mobile.changePage("#page03_register",{ transition: "flip"});;' data-inline="true" value="Register"-->
                             </div>
                         </form>
                         <br><a href="#page03_register" data-transition="flip"></a>
@@ -868,7 +863,6 @@
                                 <li><a href="#" onclick="page11_readWord();" data-icon="audio">Read</a></li>
                                 <li><a href="#" onclick="page11_submitWord();" data-icon="plus">Submit</a></li>
                                 <li><a href="#" onclick="page11_addFavorite($('#page11_Word').val(),$('#page11_wordID').html());" data-icon="star">Favorite</a></li>
-                                <!li><!a href="#" onclick="startWordTest();" data-icon="grid"><!/a><!/li>
                             </ul>
                         </div>
                         <div data-role="navbar" id="page11_rem" style="display:none;">
@@ -878,7 +872,6 @@
                                 <li><a href="#" onclick="page11_readWord();" data-icon="audio">Read</a></li>
                                 <li><a href="#" onclick="page11_submitWord();" data-icon="plus">Submit</a></li>
                                 <li><a href="#" onclick="page11_removeFavorite($('#page11_Word').val(),$('#page11_wordID').html());" data-icon="check">Remove</a></li>
-                                <!li><!a href="#" onclick="startWordTest();" data-icon="grid"><!/a><!/li>
                             </ul>
                         </div>
                     </div>

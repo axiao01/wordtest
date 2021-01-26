@@ -2,10 +2,7 @@
      
 require_once("Rest.inc.php");
 include "Transaction_needs.php";
-//include "Links_needs.php";
 //include_once('./lib/QrReader.php');
-
-//require_once("Transaction_needs.php");  
 
 class API extends REST {
      
